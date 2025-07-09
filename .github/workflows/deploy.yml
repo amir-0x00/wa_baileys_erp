@@ -1,0 +1,130 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Create deployment directory
+        run: |
+          echo "📁 Creating deployment directory..."
+          sudo mkdir -p /opt/wa-baileys-erp
+          sudo chown $USER:$USER /opt/wa-baileys-erp
+          echo "✅ Deployment directory ready"
+
+      - name: Backup current deployment
+        run: |
+          if [ -d "/opt/wa-baileys-erp" ] && [ "$(ls -A /opt/wa-baileys-erp)" ]; then
+            echo "💾 Creating backup..."
+            sudo cp -r /opt/wa-baileys-erp /opt/wa-baileys-erp.backup.$(date +%Y%m%d_%H%M%S)
+            echo "✅ Backup created"
+          fi
+
+      - name: Stop current application
+        run: |
+          echo "🛑 Stopping current application..."
+          if pm2 list | grep -q "wa-baileys-erp"; then
+            pm2 stop wa-baileys-erp || true
+            echo "✅ Application stopped"
+          else
+            echo "ℹ️ No running application found"
+          fi
+
+      - name: Copy new application files
+        run: |
+          echo "📋 Copying application files..."
+          cp -r dist/* /opt/wa-baileys-erp/
+          cp package.json /opt/wa-baileys-erp/
+          cp ecosystem.config.js /opt/wa-baileys-erp/ || true
+          echo "✅ Files copied"
+
+      - name: Install production dependencies
+        run: |
+          echo "📦 Installing production dependencies..."
+          cd /opt/wa-baileys-erp
+          npm ci --only=production
+          echo "✅ Dependencies installed"
+
+      - name: Create necessary directories
+        run: |
+          echo "📁 Creating necessary directories..."
+          mkdir -p /opt/wa-baileys-erp/uploads
+          mkdir -p /opt/wa-baileys-erp/auth_info_baileys
+          echo "✅ Directories created"
+
+      - name: Start application
+        run: |
+          echo "🚀 Starting application..."
+          cd /opt/wa-baileys-erp
+          if pm2 list | grep -q "wa-baileys-erp"; then
+            pm2 restart wa-baileys-erp
+          else
+            pm2 start ecosystem.config.js --name wa-baileys-erp
+          fi
+          echo "✅ Application started"
+
+      - name: Wait for application to start
+        run: |
+          echo "⏳ Waiting for application to start..."
+          sleep 10
+
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          max_attempts=5
+          attempt=1
+
+          while [ $attempt -le $max_attempts ]; do
+            echo "Attempt $attempt/$max_attempts"
+            if curl -f http://localhost:3000/api/status > /dev/null 2>&1; then
+              echo "✅ Deployment successful! Application is responding"
+              break
+            else
+              echo "⏳ Application not ready yet, waiting..."
+              sleep 5
+              attempt=$((attempt + 1))
+            fi
+          done
+
+          if [ $attempt -gt $max_attempts ]; then
+            echo "❌ Deployment failed: Application not responding after $max_attempts attempts"
+            echo "📋 PM2 Status:"
+            pm2 list
+            echo "📋 PM2 Logs:"
+            pm2 logs wa-baileys-erp --lines 20
+            exit 1
+          fi
+
+      - name: Cleanup old backups
+        run: |
+          echo "🧹 Cleaning up old backups..."
+          find /opt -name "wa-baileys-erp.backup.*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+          echo "✅ Cleanup completed"
+
+      - name: Deployment summary
+        run: |
+          echo "🎉 Deployment Summary:"
+          echo "📁 Application location: /opt/wa-baileys-erp"
+          echo "🌐 Application URL: http://localhost:3000"
+          echo "📊 PM2 Status:"
+          pm2 list
+          echo "✅ Deployment completed successfully!"

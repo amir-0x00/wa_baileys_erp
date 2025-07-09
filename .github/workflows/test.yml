@@ -1,0 +1,56 @@
+name: Test and Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting (if available)
+        run: npm run lint --if-present
+
+      - name: Run TypeScript type check
+        run: npm run build
+
+      - name: Run tests (if available)
+        run: npm test --if-present
+
+      - name: Security audit
+        run: npm audit --audit-level moderate
+
+      - name: Build verification
+        run: |
+          echo "🔍 Verifying build output..."
+          if [ ! -d "dist" ]; then
+            echo "❌ Build failed: dist directory not found"
+            exit 1
+          fi
+
+          echo "📁 Build contents:"
+          ls -la dist/
+
+          echo "✅ Build verification passed"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: dist/
+          retention-days: 30

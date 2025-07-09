@@ -277,6 +277,69 @@ npm run build
 - **Baileys** for WhatsApp integration
 - **Winston** for logging
 
+## 🚀 CI/CD with GitHub Actions
+
+This project uses GitHub Actions with self-hosted runners for automated testing, building, and deployment.
+
+### Workflow Files
+
+- **`.github/workflows/test.yml`** - Runs on PRs and main branch pushes
+- **`.github/workflows/deploy.yml`** - Runs only on main branch pushes
+- **`.github/workflows/ci.yml`** - Complete CI/CD pipeline
+
+### Setup Self-Hosted Runner
+
+1. **Install GitHub Actions Runner**
+
+   ```bash
+   # Download the runner
+   curl -o actions-runner-linux-x64-2.311.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.311.0/actions-runner-linux-x64-2.311.0.tar.gz
+
+   # Extract
+   tar xzf ./actions-runner-linux-x64-2.311.0.tar.gz
+
+   # Configure
+   ./config.sh --url https://github.com/amir-0x00/wa_baileys_erp --token YOUR_TOKEN
+   ```
+
+2. **Install Required Software**
+
+   ```bash
+   # Node.js 18+
+   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+   sudo apt-get install -y nodejs
+
+   # PM2 for process management
+   npm install -g pm2
+
+   # Other dependencies
+   sudo apt-get install -y curl git
+   ```
+
+3. **Start the Runner**
+
+   ```bash
+   # Start as service
+   sudo ./svc.sh install
+   sudo ./svc.sh start
+
+   # Or run manually
+   ./run.sh
+   ```
+
+### Workflow Triggers
+
+- **Pull Requests**: Runs tests and builds
+- **Main Branch Push**: Runs tests, builds, and deploys to production
+
+### Deployment Process
+
+1. **Build**: TypeScript compilation and dependency installation
+2. **Test**: Security audit and build verification
+3. **Deploy**: Automatic deployment to `/opt/wa-baileys-erp`
+4. **Verify**: Health check to ensure application is running
+5. **Backup**: Automatic backup of previous deployment
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
