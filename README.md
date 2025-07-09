@@ -287,9 +287,7 @@ This project uses GitHub Actions with self-hosted runners for automated testing,
 
 ### Workflow Files
 
-- **`.github/workflows/test.yml`** - Runs on PRs and main branch pushes
-- **`.github/workflows/deploy.yml`** - Runs only on main branch pushes
-- **`.github/workflows/ci.yml`** - Complete CI/CD pipeline
+- **`.github/workflows/deploy.yml`** - Deploys to production on main branch pushes
 
 ### Setup Self-Hosted Runner
 
@@ -333,16 +331,14 @@ This project uses GitHub Actions with self-hosted runners for automated testing,
 
 ### Workflow Triggers
 
-- **Pull Requests**: Runs tests and builds
-- **Main Branch Push**: Runs tests, builds, and deploys to production
+- **Main Branch Push**: Deploys to production automatically
 
 ### Deployment Process
 
 1. **Build**: TypeScript compilation and dependency installation
-2. **Test**: Security audit and build verification
-3. **Deploy**: Automatic deployment to `/opt/wa-baileys-erp`
-4. **Verify**: Health check to ensure application is running
-5. **Backup**: Automatic backup of previous deployment
+2. **Deploy**: Automatic deployment to `C:\wa-baileys-erp`
+3. **Verify**: Health check to ensure application is running
+4. **Backup**: Automatic backup of previous deployment
 
 ## 🐛 Troubleshooting
 

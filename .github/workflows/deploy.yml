@@ -27,103 +27,112 @@ jobs:
       - name: Create deployment directory
         run: |
           echo "📁 Creating deployment directory..."
-          sudo mkdir -p /opt/wa-baileys-erp
-          sudo chown $USER:$USER /opt/wa-baileys-erp
+          New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp"
           echo "✅ Deployment directory ready"
 
       - name: Backup current deployment
         run: |
-          if [ -d "/opt/wa-baileys-erp" ] && [ "$(ls -A /opt/wa-baileys-erp)" ]; then
+          if (Test-Path "C:\wa-baileys-erp") {
             echo "💾 Creating backup..."
-            sudo cp -r /opt/wa-baileys-erp /opt/wa-baileys-erp.backup.$(date +%Y%m%d_%H%M%S)
+            $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+            Copy-Item -Path "C:\wa-baileys-erp" -Destination "C:\wa-baileys-erp.backup.$timestamp" -Recurse -Force
             echo "✅ Backup created"
-          fi
+          }
 
       - name: Stop current application
         run: |
           echo "🛑 Stopping current application..."
-          if pm2 list | grep -q "wa-baileys-erp"; then
-            pm2 stop wa-baileys-erp || true
+          try {
+            pm2 stop wa-baileys-erp
             echo "✅ Application stopped"
-          else
+          } catch {
             echo "ℹ️ No running application found"
-          fi
+          }
 
       - name: Copy new application files
         run: |
           echo "📋 Copying application files..."
-          cp -r dist/* /opt/wa-baileys-erp/
-          cp package.json /opt/wa-baileys-erp/
-          cp ecosystem.config.js /opt/wa-baileys-erp/ || true
+          Copy-Item -Path "dist\*" -Destination "C:\wa-baileys-erp\" -Recurse -Force
+          Copy-Item -Path "package.json" -Destination "C:\wa-baileys-erp\" -Force
+          if (Test-Path "ecosystem.config.js") {
+            Copy-Item -Path "ecosystem.config.js" -Destination "C:\wa-baileys-erp\" -Force
+          }
           echo "✅ Files copied"
 
       - name: Install production dependencies
         run: |
           echo "📦 Installing production dependencies..."
-          cd /opt/wa-baileys-erp
+          Set-Location "C:\wa-baileys-erp"
           npm ci --only=production
           echo "✅ Dependencies installed"
 
       - name: Create necessary directories
         run: |
           echo "📁 Creating necessary directories..."
-          mkdir -p /opt/wa-baileys-erp/uploads
-          mkdir -p /opt/wa-baileys-erp/auth_info_baileys
+          New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp\uploads"
+          New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp\auth_info_baileys"
           echo "✅ Directories created"
 
       - name: Start application
         run: |
           echo "🚀 Starting application..."
-          cd /opt/wa-baileys-erp
-          if pm2 list | grep -q "wa-baileys-erp"; then
+          Set-Location "C:\wa-baileys-erp"
+          try {
             pm2 restart wa-baileys-erp
-          else
+            echo "✅ Application restarted"
+          } catch {
             pm2 start ecosystem.config.js --name wa-baileys-erp
-          fi
-          echo "✅ Application started"
+            echo "✅ Application started"
+          }
 
       - name: Wait for application to start
         run: |
           echo "⏳ Waiting for application to start..."
-          sleep 10
+          Start-Sleep -Seconds 10
 
       - name: Verify deployment
         run: |
           echo "🔍 Verifying deployment..."
-          max_attempts=5
-          attempt=1
+          $maxAttempts = 5
+          $attempt = 1
 
-          while [ $attempt -le $max_attempts ]; do
-            echo "Attempt $attempt/$max_attempts"
-            if curl -f http://localhost:3000/api/status > /dev/null 2>&1; then
-              echo "✅ Deployment successful! Application is responding"
-              break
-            else
+          while ($attempt -le $maxAttempts) {
+            echo "Attempt $attempt/$maxAttempts"
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:3000/api/status" -UseBasicParsing -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                echo "✅ Deployment successful! Application is responding"
+                break
+              }
+            } catch {
               echo "⏳ Application not ready yet, waiting..."
-              sleep 5
-              attempt=$((attempt + 1))
-            fi
-          done
+              Start-Sleep -Seconds 5
+              $attempt++
+            }
+          }
 
-          if [ $attempt -gt $max_attempts ]; then
-            echo "❌ Deployment failed: Application not responding after $max_attempts attempts"
+          if ($attempt -gt $maxAttempts) {
+            echo "❌ Deployment failed: Application not responding after $maxAttempts attempts"
             echo "📋 PM2 Status:"
             pm2 list
             echo "📋 PM2 Logs:"
             pm2 logs wa-baileys-erp --lines 20
             exit 1
-          fi
+          }
 
       - name: Cleanup old backups
         run: |
           echo "🧹 Cleaning up old backups..."
-          find /opt -name "wa-baileys-erp.backup.*" -type d -mtime +7 -exec rm -rf {} \; 2>/dev/null || true
+          $backups = Get-ChildItem -Path "C:\" -Filter "wa-baileys-erp.backup.*" -Directory | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-7) }
+          foreach ($backup in $backups) {
+            Remove-Item -Path $backup.FullName -Recurse -Force
+          }
           echo "✅ Cleanup completed"
 
       - name: Deployment summary
         run: |
           echo "🎉 Deployment Summary:"
-          echo "📁 Application location: /opt/wa-baileys-erp"
+          echo "📁 Application location: C:\wa-baileys-erp"
           echo "🌐 Application URL: http://localhost:3000"
           echo "📊 PM2 Status:"
           pm2 list

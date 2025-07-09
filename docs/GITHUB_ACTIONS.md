@@ -4,11 +4,9 @@ This guide explains how to set up GitHub Actions with self-hosted runners for th
 
 ## 📋 Overview
 
-The project uses three GitHub Actions workflows:
+The project uses a single GitHub Actions workflow:
 
-1. **`test.yml`** - Runs tests and builds on PRs and main branch pushes
-2. **`deploy.yml`** - Deploys to production on main branch pushes only
-3. **`ci.yml`** - Complete CI/CD pipeline (alternative to the above two)
+1. **`deploy.yml`** - Deploys to production on main branch pushes only
 
 ## 🚀 Quick Setup
 
@@ -22,7 +20,7 @@ Run the automated setup script:
 
 This script will:
 
-- Install Node.js 18
+- Install Node.js 20
 - Install PM2
 - Download and configure GitHub Actions runner
 - Set up the runner as a service
@@ -83,30 +81,13 @@ sudo ./svc.sh start
 
 #### 5. Create Application Directories
 
-```bash
-sudo mkdir -p /opt/wa-baileys-erp
-sudo chown $USER:$USER /opt/wa-baileys-erp
-mkdir -p /opt/wa-baileys-erp/uploads
-mkdir -p /opt/wa-baileys-erp/auth_info_baileys
+```powershell
+New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp"
+New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp\uploads"
+New-Item -ItemType Directory -Force -Path "C:\wa-baileys-erp\auth_info_baileys"
 ```
 
 ## 🔧 Workflow Details
-
-### Test Workflow (`test.yml`)
-
-**Triggers**: Pull requests and pushes to main branch
-
-**Steps**:
-
-1. Checkout code
-2. Setup Node.js 18
-3. Install dependencies
-4. Run linting (if available)
-5. TypeScript type check
-6. Run tests (if available)
-7. Security audit
-8. Build verification
-9. Upload build artifacts
 
 ### Deploy Workflow (`deploy.yml`)
 
@@ -115,7 +96,7 @@ mkdir -p /opt/wa-baileys-erp/auth_info_baileys
 **Steps**:
 
 1. Build application
-2. Create deployment directory
+2. Create deployment directory (`C:\wa-baileys-erp`)
 3. Backup current deployment
 4. Stop current application
 5. Copy new files
@@ -124,16 +105,6 @@ mkdir -p /opt/wa-baileys-erp/auth_info_baileys
 8. Start application
 9. Verify deployment
 10. Cleanup old backups
-
-### Complete CI/CD (`ci.yml`)
-
-**Triggers**: Pull requests and pushes to main branch
-
-**Jobs**:
-
-1. **test-and-build**: Tests, builds, and security checks
-2. **security-scan**: Additional security scanning
-3. **deploy**: Deployment (only on main branch pushes)
 
 ## 📊 Monitoring
 
@@ -167,11 +138,9 @@ pm2 list
 
 ## 🔄 Workflow Triggers
 
-| Event        | Workflow                  | Description             |
-| ------------ | ------------------------- | ----------------------- |
-| Push to main | `test.yml` + `deploy.yml` | Test, build, and deploy |
-| Pull Request | `test.yml`                | Test and build only     |
-| Push to main | `ci.yml`                  | Complete pipeline       |
+| Event        | Workflow     | Description          |
+| ------------ | ------------ | -------------------- |
+| Push to main | `deploy.yml` | Deploy to production |
 
 ## 🛠️ Troubleshooting
 
