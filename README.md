@@ -34,7 +34,7 @@ A powerful WhatsApp messaging system built with Node.js, TypeScript, and Baileys
 1. **Clone the repository**
 
    ```bash
-   git clone https://github.com/yourusername/wa_baileys_erp.git
+   git clone https://github.com/amir-0x00/wa_baileys_erp.git
    cd wa_baileys_erp
    ```
 
