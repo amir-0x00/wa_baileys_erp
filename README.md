@@ -103,7 +103,7 @@ Once connected, you'll see a green checkmark and the message form will appear. Y
 ```bash
 curl -X POST http://localhost:3000/api/send-message \
   -F "phoneNumber=0501234567" \
-  -F "message=Hello from WhatsApp Bot!"
+  -F "message=Hello from WhatsApp Bot\!"
 ```
 
 #### Send Media Message
@@ -111,7 +111,7 @@ curl -X POST http://localhost:3000/api/send-message \
 ```bash
 curl -X POST http://localhost:3000/api/send-message \
   -F "phoneNumber=0501234567" \
-  -F "message=Check out this image!" \
+  -F "message=Check out this image\!" \
   -F "media=@/path/to/image.jpg"
 ```
 
