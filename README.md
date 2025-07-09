@@ -24,7 +24,7 @@ A powerful WhatsApp messaging system built with Node.js, TypeScript, and Baileys
 
 ### Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
+- **Node.js** 20+ ([Download](https://nodejs.org/))
 - **npm** or **yarn**
 - **WhatsApp** installed on your phone
 - **Git** (for cloning)
@@ -254,6 +254,10 @@ fetch('/api/send-message', {
 ### Prerequisites
 
 ```bash
+# Ensure you have Node.js 20+
+node --version
+
+# Install global dependencies
 npm install -g typescript ts-node-dev
 ```
 

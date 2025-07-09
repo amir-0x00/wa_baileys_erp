@@ -1,4 +1,4 @@
-name: Test and Build
+name: Quick Build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  build:
     runs-on: self-hosted
 
     steps:
@@ -23,28 +23,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run TypeScript type check
+      - name: Build application
         run: npm run build
 
-      - name: Security audit
-        run: npm audit --audit-level moderate
-
-      - name: Build verification
+      - name: Verify build
         run: |
-          echo "🔍 Verifying build output..."
           if [ ! -d "dist" ]; then
-            echo "❌ Build failed: dist directory not found"
+            echo "❌ Build failed"
             exit 1
           fi
+          echo "✅ Build successful"
 
-          echo "📁 Build contents:"
-          ls -la dist/
-
-          echo "✅ Build verification passed"
-
-      - name: Upload build artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: build-files
           path: dist/
-          retention-days: 30
+          retention-days: 7

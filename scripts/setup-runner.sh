@@ -52,13 +52,13 @@ check_dependencies() {
 
 # Install Node.js
 install_nodejs() {
-    print_status "Installing Node.js 18..."
+    print_status "Installing Node.js 20..."
     
     if command -v node &> /dev/null; then
         NODE_VERSION=$(node --version)
         print_warning "Node.js is already installed: $NODE_VERSION"
     else
-        curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
         sudo apt-get install -y nodejs
         print_status "Node.js installed successfully"
     fi
